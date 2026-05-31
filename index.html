@@ -1,0 +1,936 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta http-equiv="Content-Security-Policy" content="default-src * data: gap: content: https://ssl.gstatic.com; style-src * 'unsafe-inline'; script-src * 'unsafe-inline' 'unsafe-eval'">
+   
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+    <title>GAMES OF INVESTMENT</title>
+   
+    <style>
+        /* 全体のレイアウト設定 */
+        body {
+            font-family: "Helvetica Neue", Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            margin: 0;
+            padding: 5px;
+            padding-bottom: 70px;
+            text-align: center;
+            font-size: 12px;
+            height: 100vh;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+
+        /* スタート画面 */
+        #start-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #ecf0f1;
+            z-index: 999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+       
+        .title-logo {
+            font-size: 28px; /* 少し大きくしました */
+            font-weight: 900;
+            color: #c0392b;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+       
+        .start-desc {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+
+        .setting-area {
+            width: 100%;
+            max-width: 300px;
+            margin-bottom: 30px;
+            background: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            text-align: left;
+        }
+        .setting-row {
+            margin-bottom: 15px;
+        }
+        .setting-row:last-child {
+            margin-bottom: 0;
+        }
+        .setting-label {
+            font-size: 14px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+       
+        /* チェックボックス */
+        input[type="checkbox"] { transform: scale(1.3); cursor: pointer; }
+
+
+        /* スライダー */
+        input[type="range"] {
+            width: 100%;
+            margin-top: 5px;
+            cursor: pointer;
+        }
+
+
+        .btn-start-game {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 15px 50px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 30px;
+            box-shadow: 0 4px 10px rgba(231, 76, 60, 0.4);
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        .btn-start-game:active { transform: scale(0.95); }
+
+
+        /* ゲーム画面 */
+        #game-container {
+            display: none;
+            height: 100%;
+            overflow-y: auto;
+        }
+
+
+        h1 { font-size: 14px; margin: 0; color: #c0392b; display: inline-block; }
+
+
+        .card {
+            background: white;
+            border-radius: 6px;
+            padding: 5px 8px;
+            margin-bottom: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+
+        .timer-container {
+            width: 100%;
+            height: 6px;
+            background-color: #eee;
+            border-radius: 3px;
+            margin-top: 2px;
+            overflow: hidden;
+        }
+        .timer-bar {
+            height: 100%;
+            background-color: #e74c3c;
+            width: 0%;
+        }
+
+
+        .status-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+            font-size: 12px;
+        }
+       
+        .date-info { display: flex; align-items: center; gap: 4px; }
+        .calendar-date { font-size: 11px; color: #666; font-weight: normal; }
+
+
+        #chart-container { height: 130px; width: 100%; position: relative; }
+
+
+        table { width: 100%; border-collapse: collapse; font-size: 10px; }
+        th { background-color: #eee; padding: 2px 4px; text-align: left; }
+        td { padding: 4px 4px; border-bottom: 1px solid #f0f0f0; text-align: left; }
+        .price-col { text-align: right; font-weight: bold; }
+        .held-col { text-align: right; color: #666; }
+
+
+        .input-group { display: flex; gap: 5px; margin-bottom: 5px; }
+        select, input[type="number"] {
+            padding: 5px; font-size: 11px; border: 1px solid #ddd;
+            border-radius: 4px; height: 30px; box-sizing: border-box;
+        }
+        select { flex: 3; }
+        input { flex: 2; }
+
+
+        .btn-group { display: flex; gap: 5px; }
+        button.action-btn {
+            flex: 1; padding: 8px 0; border: none; border-radius: 4px;
+            font-size: 13px; font-weight: bold; color: white; cursor: pointer;
+        }
+        .btn-buy { background-color: #e74c3c; }
+        .btn-sell { background-color: #3498db; }
+        button:active { opacity: 0.7; }
+
+
+        #btn-music {
+            font-size: 10px; padding: 2px 6px; background-color: #95a5a6;
+            border: none; border-radius: 10px; color: white; cursor: pointer;
+            margin-right: 5px; flex: none;
+        }
+
+
+        #log {
+            font-size: 10px; color: #666; height: 35px; overflow-y: scroll;
+            text-align: left; border-top: 1px solid #eee; margin-top: 5px;
+            padding-top: 2px; line-height: 1.2;
+        }
+
+
+        .news-ticker {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            background-color: #2c3e50; color: #f1c40f;
+            padding: 15px 15px; font-size: 18px; font-weight: bold;
+            text-align: left; z-index: 100;
+            box-shadow: 0 -4px 10px rgba(0,0,0,0.3);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+       
+        .flash-news { animation: flash 1s; }
+        @keyframes flash {
+            0% { background-color: #e74c3c; color: white; }
+            100% { background-color: #2c3e50; color: #f1c40f; }
+        }
+    </style>
+</head>
+<body>
+
+
+    <audio id="bgm" src="Floraria.mp3" loop preload="auto"></audio>
+
+
+    <div id="start-screen">
+        <div class="title-logo">GAMES OF INVESTMENT</div>
+        <div class="start-desc">
+            元手100万円からスタート！<br>
+            株価5円以下で倒産。14日後に新会社。<br>
+            ハイリスク・ハイリターンな相場です。<br>
+        </div>
+       
+        <div class="setting-area">
+            <div class="setting-row">
+                <label class="setting-label">
+                    <input type="checkbox" id="chk-events" checked> ニュースイベントあり
+                </label>
+            </div>
+           
+            <div class="setting-row">
+                <label class="setting-label">
+                    ⏱️ 1日の長さ: <span id="time-setting-val" style="color:#e74c3c; font-size:16px;">5</span>秒
+                </label>
+                <input type="range" id="time-slider" min="1" max="10" value="5">
+                <div style="display:flex; justify-content:space-between; font-size:10px; color:#999;">
+                    <span>1秒(速)</span>
+                    <span>10秒(遅)</span>
+                </div>
+            </div>
+        </div>
+
+
+        <button class="btn-start-game" onclick="startGame()">ゲームスタート</button>
+    </div>
+
+
+    <div id="game-container">
+        <div class="card" style="padding-bottom: 8px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h1 id="game-title">⚡5秒トレード</h1>
+                <div style="display:flex; align-items:center;">
+                    <button id="btn-music" onclick="toggleMusic()">🎵 BGM OFF</button>
+                    <span style="font-size:10px; color:#e74c3c;">次へ: <span id="time-display">0</span>s</span>
+                </div>
+            </div>
+            <div class="timer-container">
+                <div id="timer-bar" class="timer-bar"></div>
+            </div>
+        </div>
+
+
+        <div class="card">
+            <div class="status-row">
+                <div class="date-info">
+                    <span>📅 <span id="day">1</span>日目</span>
+                    <span id="calendar-date" class="calendar-date">(4/1)</span>
+                </div>
+                <span>現金: <span id="cash">1,000,000</span></span>
+            </div>
+            <div class="status-row" style="margin-top:2px; justify-content: flex-end;">
+                 <span>総資産: <span id="total-asset">1,000,000</span></span>
+            </div>
+        </div>
+
+
+        <div class="card" style="margin-bottom:4px;">
+            <div id="chart-container">
+                <canvas id="stockChart"></canvas>
+            </div>
+        </div>
+
+
+        <div class="card" style="margin-bottom:4px;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>銘柄</th>
+                        <th class="price-col">現在値</th>
+                        <th class="held-col">所持</th>
+                    </tr>
+                </thead>
+                <tbody id="stock-list-body"></tbody>
+            </table>
+        </div>
+
+
+        <div class="card">
+            <div class="input-group">
+                <select id="stock-select"></select>
+                <input type="number" id="trade-amount" placeholder="数" value="100">
+            </div>
+            <div class="btn-group">
+                <button class="action-btn btn-buy" onclick="buyStock()">買う</button>
+                <button class="action-btn btn-sell" onclick="sellStock()">売る</button>
+            </div>
+            <div id="log">4月1日 スタート！</div>
+        </div>
+    </div>
+
+
+    <div id="news-bar" class="news-ticker">NEWS: 特にありません</div>
+
+
+    <script>
+        let enableEvents = true;
+        let maxTime = 5; // デフォルト5秒
+
+
+        // スライダー操作時に数値を更新
+        document.getElementById('time-slider').addEventListener('input', function(e) {
+            document.getElementById('time-setting-val').innerText = e.target.value;
+        });
+
+
+        function startGame() {
+            // 設定値の取得
+            const checkbox = document.getElementById('chk-events');
+            enableEvents = checkbox.checked;
+
+
+            const slider = document.getElementById('time-slider');
+            maxTime = parseInt(slider.value);
+
+
+            // タイトルも変更
+            document.getElementById('game-title').innerText = `⚡${maxTime}秒トレード`;
+
+
+            document.getElementById('start-screen').style.display = 'none';
+            document.getElementById('game-container').style.display = 'block';
+           
+            if (!enableEvents) {
+                document.getElementById('news-bar').innerText = "NEWS: 機能OFFのため発生しません";
+            }
+
+
+            updateDisplay();
+           
+            const audio = document.getElementById('bgm');
+            const btn = document.getElementById('btn-music');
+            audio.volume = 0.5;
+            audio.play().then(() => {
+                btn.innerText = "🎵 BGM ON";
+                btn.style.backgroundColor = "#2ecc71";
+            }).catch(e => {
+                console.log("BGM自動再生ブロック");
+            });
+
+
+            // startTimerの前に初期描画を確実にするため少し遅らせる（必要なら）
+            startTimer();
+        }
+
+
+        function toggleMusic() {
+            const audio = document.getElementById('bgm');
+            const btn = document.getElementById('btn-music');
+           
+            if (audio.paused) {
+                audio.play();
+                btn.innerText = "🎵 BGM ON";
+                btn.style.backgroundColor = "#2ecc71";
+            } else {
+                audio.pause();
+                btn.innerText = "🎵 BGM OFF";
+                btn.style.backgroundColor = "#95a5a6";
+            }
+        }
+
+
+        let day = 1;
+        let cash = 1000000;
+        let timeCount = 0;
+        let currentDate = new Date(2024, 3, 1);
+
+
+        // --- 銘柄定義 ---
+        const stocks = [
+            {
+                id: 0,
+                name: "アツコ自動車",
+                originalName: "アツコ自動車",
+                altName: "ニックニモーター",
+                price: 800,
+                initPrice: 800,
+                held: 0,
+                color: '#3498db',
+                isBankrupt: false,
+                bankruptcyDay: 0,
+                isAlternate: false
+            },
+            {
+                id: 1,
+                name: "藤川建設",
+                originalName: "藤川建設",
+                altName: "太樹土建",
+                price: 300,
+                initPrice: 300,
+                held: 0,
+                color: '#9b59b6',
+                isBankrupt: false,
+                bankruptcyDay: 0,
+                isAlternate: false
+            },
+            {
+                id: 2,
+                name: "サヴァゲ銀行",
+                originalName: "サヴァゲ銀行",
+                altName: "堀金バンク",
+                price: 1200,
+                initPrice: 1200,
+                held: 0,
+                color: '#f39c12',
+                isBankrupt: false,
+                bankruptcyDay: 0,
+                isAlternate: false
+            },
+            {
+                id: 3,
+                name: "よしうみ食品",
+                originalName: "よしうみ食品",
+                altName: "星成フーズ",
+                price: 500,
+                initPrice: 500,
+                held: 0,
+                color: '#2ecc71',
+                isBankrupt: false,
+                bankruptcyDay: 0,
+                isAlternate: false
+            },
+            {
+                id: 4,
+                name: "あきひこテツク",
+                originalName: "あきひこテツク",
+                altName: "NNMデータ",
+                price: 1000,
+                initPrice: 1000,
+                held: 0,
+                color: '#e74c3c',
+                isBankrupt: false,
+                bankruptcyDay: 0,
+                isAlternate: false
+            }
+        ];
+
+
+        let chartLabels = ["4/1"];
+
+
+        const MAG_S = 0.10;
+        const MAG_M = 0.30;
+        const MAG_L = 0.50;
+
+
+        let isPandemic = false;
+        let isWar = false;
+        let lastEarthquakeDay = -999;
+        let lastWarStartDay = -999;
+        let lastPandemicStartDay = -999;
+        let lastEventName = "";
+
+
+        let pendingEffects = [];
+
+
+        const eventDefinitions = [
+            {
+                text: "輸入関税、電撃引き上げへ",
+                prob: 10,
+                cond: () => true,
+                effectData: [
+                    { id: 0, val: -MAG_L }, { id: 1, val: -MAG_S }, { id: 3, val: -MAG_M }
+                ]
+            },
+            {
+                text: "貿易促進へ関税撤廃で合意",
+                prob: 10,
+                cond: () => true,
+                effectData: [
+                    { id: 0, val: MAG_M }, { id: 3, val: MAG_S }
+                ]
+            },
+            {
+                text: "中央銀行、異例の利上げ決定",
+                prob: 8,
+                cond: () => true,
+                effectData: [
+                    { id: 0, val: -MAG_M }, { id: 1, val: -MAG_L }, { id: 2, val: MAG_L }, { id: 4, val: -MAG_L }
+                ]
+            },
+            {
+                text: "景気下支えへ緊急利下げ断行",
+                prob: 8,
+                cond: () => true,
+                effectData: [
+                    { id: 0, val: MAG_S }, { id: 1, val: MAG_M }, { id: 2, val: -MAG_M }, { id: 4, val: MAG_M }
+                ]
+            },
+            {
+                text: "最大震度７、各地で甚大被害",
+                prob: 2,
+                cond: () => (day - lastEarthquakeDay) > 364,
+                effectData: [
+                    { id: 0, val: -MAG_M }, { id: 1, val: MAG_M }, { id: 3, val: -MAG_S }
+                ],
+                onTrigger: () => { lastEarthquakeDay = day; }
+            },
+            {
+                text: "新型ウイルス、世界的流行へ",
+                prob: 2,
+                cond: () => !isPandemic && (day - lastPandemicStartDay) > 364,
+                effectData: [
+                    { id: 0, val: -MAG_L }, { id: 3, val: -MAG_M }, { id: 4, val: MAG_L }
+                ],
+                onTrigger: () => { isPandemic = true; lastPandemicStartDay = day; }
+            },
+            {
+                text: "感染爆発、医療体制がひっ迫",
+                prob: 6,
+                cond: () => isPandemic,
+                effectData: [
+                    { id: 0, val: -MAG_M }, { id: 4, val: MAG_M }
+                ]
+            },
+            {
+                text: "ＷＨＯ、緊急事態終了を宣言",
+                prob: 4,
+                cond: () => isPandemic && (day - lastPandemicStartDay) > 20,
+                effectData: [
+                    { id: 0, val: MAG_M }, { id: 3, val: MAG_M }, { id: 4, val: -MAG_M }
+                ],
+                onTrigger: () => { isPandemic = false; }
+            },
+            {
+                text: "緊張の国境、事実上の開戦へ",
+                prob: 2,
+                cond: () => !isWar && (day - lastWarStartDay) > 199,
+                effectData: [
+                    { id: 0, val: -MAG_M }, { id: 3, val: -MAG_M }, { id: 4, val: -MAG_S }
+                ],
+                onTrigger: () => { isWar = true; lastWarStartDay = day; }
+            },
+            {
+                text: "歴史的転換、停戦協定に調印",
+                prob: 4,
+                cond: () => isWar && (day - lastWarStartDay) > 14,
+                effectData: [
+                    { id: 0, val: MAG_S }, { id: 1, val: MAG_M }, { id: 3, val: MAG_S }
+                ],
+                onTrigger: () => { isWar = false; }
+            },
+            {
+                text: "日本列島、危険な暑さ続く",
+                prob: 8,
+                cond: () => { const m = currentDate.getMonth(); return (m >= 4 && m <= 8); },
+                effectData: [
+                    { id: 1, val: -MAG_S }, { id: 3, val: MAG_M }
+                ]
+            },
+            {
+                text: "地球沸騰、世界各地で熱波",
+                prob: 8,
+                cond: () => { const m = currentDate.getMonth(); return (m >= 4 && m <= 8); },
+                effectData: [
+                    { id: 3, val: -MAG_M }
+                ]
+            },
+            {
+                text: "最強寒波、交通網が完全麻痺",
+                prob: 8,
+                cond: () => { const m = currentDate.getMonth(); return (m === 11 || m === 0 || m === 1); },
+                effectData: [
+                    { id: 0, val: -MAG_S }, { id: 1, val: MAG_S }
+                ]
+            },
+            {
+                text: "サンマ豊漁、港に活気戻る",
+                prob: 8,
+                cond: () => true,
+                effectData: [
+                    { id: 3, val: MAG_M }
+                ]
+            },
+            {
+                text: "記録的不漁、価格高騰止まず",
+                prob: 8,
+                cond: () => true,
+                effectData: [
+                    { id: 3, val: -MAG_M }
+                ]
+            },
+            {
+                text: "新幹線延伸、待望の着工決定",
+                prob: 6,
+                cond: () => true,
+                effectData: [
+                    { id: 1, val: MAG_L }, { id: 4, val: MAG_S }
+                ]
+            }
+        ];
+
+
+        // --- 初期化 ---
+        const ctx = document.getElementById('stockChart').getContext('2d');
+        const myChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: chartLabels,
+                datasets: stocks.map(stock => ({
+                    label: stock.name,
+                    data: [stock.price],
+                    borderColor: stock.color,
+                    borderWidth: 2,
+                    fill: false,
+                    tension: 0.1,
+                    pointRadius: 0,
+                    spanGaps: false
+                }))
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { display: false },
+                    y: { ticks: { font: { size: 10 } } }
+                },
+                animation: { duration: 0 }
+            }
+        });
+
+
+        // --- 表示更新 ---
+        function updateDisplay() {
+            document.getElementById('day').innerText = day;
+           
+            const m = currentDate.getMonth() + 1;
+            const d = currentDate.getDate();
+            document.getElementById('calendar-date').innerText = `(${m}/${d})`;
+
+
+            document.getElementById('cash').innerText = cash.toLocaleString();
+           
+            let stockValue = stocks.reduce((sum, stock) => {
+                if (stock.isBankrupt) return sum;
+                return sum + (stock.price * stock.held);
+            }, 0);
+            document.getElementById('total-asset').innerText = (cash + stockValue).toLocaleString();
+
+
+            const tbody = document.getElementById('stock-list-body');
+            tbody.innerHTML = "";
+           
+            stocks.forEach(stock => {
+                if (stock.isBankrupt) return;
+               
+                let row = `<tr>
+                    <td style="color:${stock.color}; font-weight:bold;">${stock.name}</td>
+                    <td class="price-col">${stock.price.toLocaleString()}</td>
+                    <td class="held-col">${stock.held.toLocaleString()}</td>
+                </tr>`;
+                tbody.innerHTML += row;
+            });
+
+
+            const selectBox = document.getElementById('stock-select');
+            const currentVal = selectBox.value;
+            selectBox.innerHTML = "";
+            stocks.forEach((stock, index) => {
+                if (stock.isBankrupt) return;
+                let option = document.createElement("option");
+                option.value = index;
+                option.text = stock.name;
+                selectBox.appendChild(option);
+            });
+            if (currentVal && !stocks[currentVal].isBankrupt) {
+                selectBox.value = currentVal;
+            } else if (selectBox.options.length > 0) {
+                selectBox.selectedIndex = 0;
+            }
+        }
+
+
+        function addLog(msg) {
+            let logDiv = document.getElementById('log');
+            logDiv.innerHTML = msg + "<br>" + logDiv.innerHTML;
+        }
+
+
+        function getSelectedStock() {
+            const val = document.getElementById('stock-select').value;
+            if (val === "") return null;
+            return stocks[val];
+        }
+
+
+        function buyStock() {
+            const stock = getSelectedStock();
+            if (!stock) return;
+
+
+            const amount = parseInt(document.getElementById('trade-amount').value);
+            if (isNaN(amount) || amount <= 0) return;
+           
+            const cost = stock.price * amount;
+            if (cash >= cost) {
+                cash -= cost;
+                stock.held += amount;
+                addLog(`買: ${stock.name} ${amount}株`);
+                updateDisplay();
+            } else {
+                addLog("資金不足!");
+            }
+        }
+
+
+        function sellStock() {
+            const stock = getSelectedStock();
+            if (!stock) return;
+
+
+            const amount = parseInt(document.getElementById('trade-amount').value);
+            if (isNaN(amount) || amount <= 0) return;
+
+
+            if (stock.held >= amount) {
+                const gain = stock.price * amount;
+                cash += gain;
+                stock.held -= amount;
+                addLog(`売: ${stock.name} ${amount}株`);
+                updateDisplay();
+            } else {
+                addLog("株不足!");
+            }
+        }
+
+
+        // --- タイマー処理 ---
+        function startTimer() {
+            setInterval(() => {
+                timeCount += 0.1;
+                let percent = (timeCount / maxTime) * 100;
+                document.getElementById('timer-bar').style.width = percent + "%";
+               
+                let remain = Math.ceil(maxTime - timeCount);
+                if(remain < 0) remain = 0;
+                document.getElementById('time-display').innerText = remain;
+
+
+                if (timeCount >= maxTime) {
+                    nextDay();
+                    timeCount = 0;
+                    document.getElementById('timer-bar').style.width = "0%";
+                }
+            }, 100);
+        }
+
+
+        function nextDay() {
+            day++;
+           
+            currentDate.setDate(currentDate.getDate() + 1);
+            const m = currentDate.getMonth() + 1;
+            const d = currentDate.getDate();
+            const dateStr = `${m}/${d}`;
+            chartLabels.push(dateStr);
+
+
+            if (enableEvents && day % 7 === 0) {
+                triggerNewsEvent();
+            }
+
+
+            applyStockChanges();
+            checkBankruptcy();
+            checkRebirth();
+
+
+            if (chartLabels.length > 30) {
+                chartLabels.shift();
+                myChart.data.datasets.forEach(dataset => dataset.data.shift());
+            }
+
+
+            stocks.forEach((stock, index) => {
+                if (stock.isBankrupt) {
+                    myChart.data.datasets[index].data.push(null);
+                } else {
+                    myChart.data.datasets[index].data.push(stock.price);
+                    myChart.data.datasets[index].label = stock.name;
+                }
+            });
+
+
+            myChart.update();
+            updateDisplay();
+        }
+
+
+        function triggerNewsEvent() {
+            const validEvents = eventDefinitions.filter(evt => {
+                if (evt.text === lastEventName) return false;
+                return evt.cond();
+            });
+
+
+            if (validEvents.length === 0) return;
+
+
+            let totalWeight = validEvents.reduce((sum, evt) => sum + evt.prob, 0);
+            let randomVal = Math.random() * totalWeight;
+            let selectedEvent = null;
+
+
+            for (let evt of validEvents) {
+                if (randomVal < evt.prob) {
+                    selectedEvent = evt;
+                    break;
+                }
+                randomVal -= evt.prob;
+            }
+            if (!selectedEvent) selectedEvent = validEvents[validEvents.length - 1];
+
+
+            lastEventName = selectedEvent.text;
+            showNews(selectedEvent.text);
+            addLog("★ " + selectedEvent.text);
+
+
+            if (selectedEvent.effectData) {
+                pendingEffects.push({
+                    activateDay: day + 4,
+                    changes: selectedEvent.effectData
+                });
+            }
+            if (selectedEvent.onTrigger) {
+                selectedEvent.onTrigger();
+            }
+        }
+
+
+        function showNews(text) {
+            const newsBar = document.getElementById('news-bar');
+            newsBar.innerText = "速報: " + text;
+            newsBar.classList.remove("flash-news");
+            void newsBar.offsetWidth;
+            newsBar.classList.add("flash-news");
+        }
+
+
+        function applyStockChanges() {
+            let changes = stocks.map(() => (Math.random() * 0.2) - 0.1);
+
+
+            const activeEvents = pendingEffects.filter(e => e.activateDay === day);
+           
+            activeEvents.forEach(evt => {
+                evt.changes.forEach(c => {
+                    changes[c.id] += c.val;
+                });
+                addLog(`⚠️ニュース効果発生`);
+            });
+
+
+            pendingEffects = pendingEffects.filter(e => e.activateDay !== day);
+
+
+            stocks.forEach((stock, index) => {
+                if (stock.isBankrupt) return;
+
+
+                let changePercent = changes[index];
+                let priceChange = Math.floor(stock.price * changePercent);
+                stock.price += priceChange;
+            });
+        }
+
+
+        function checkBankruptcy() {
+            stocks.forEach(stock => {
+                if (!stock.isBankrupt && stock.price <= 5) {
+                    stock.isBankrupt = true;
+                    stock.bankruptcyDay = day;
+                    stock.price = 0;
+                    stock.held = 0;  
+                   
+                    const msg = `${stock.name} が倒産しました！`;
+                    showNews(msg);
+                    addLog("💀 " + msg);
+                }
+            });
+        }
+
+
+        function checkRebirth() {
+            stocks.forEach(stock => {
+                if (stock.isBankrupt && day === (stock.bankruptcyDay + 14)) {
+                    stock.isBankrupt = false;
+                    stock.isAlternate = !stock.isAlternate;
+                    stock.name = stock.isAlternate ? stock.altName : stock.originalName;
+                    stock.price = stock.initPrice;
+                   
+                    const msg = `新会社設立: ${stock.name}`;
+                    showNews(msg);
+                    addLog("✨ " + msg);
+                }
+            });
+        }
+       
+    </script>
+</body>
+</html>
+
